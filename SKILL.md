@@ -1,20 +1,48 @@
 ---
 name: windows-toolchain-forensics
-description: Diagnose, stabilize, and repair fragmented Windows developer toolchains (PATH conflicts, version manager overlap, shell/editor mismatch, policy/proxy/certificate constraints, and post-agent drift). Use when commands fail unexpectedly, tools resolve inconsistently across contexts, installations "succeed" but binaries fail, or a safe rollback-first remediation plan is required.
+description: Forensic debugger for messy Windows dev setups. Use when users report in casual language that installs "look done" but still fail, PATH/shell behavior is inconsistent, tools only work in one terminal/editor, or prior-agent changes cannot be verified.
 ---
 
 # Windows Toolchain Forensics
 
 Execute forensic triage for broken Windows development environments using a safety-first, evidence-first workflow.
 
+## Trigger quickly on casual language (tightly wired)
+
+Activate this skill when user intent matches environment fragmentation, even if wording is non-technical.
+
+### Plain-language trigger phrases
+
+- "my Windows setup is a mess"
+- "PATH is cursed" / "my path is broken"
+- "it works here but not there"
+- "agent/bot said it fixed it but it's still broken"
+- "I don't know what's actually installed anymore"
+- "I installed it and it still says command not found"
+- "VS Code works but terminal doesn't" (or the reverse)
+- "everything got worse after installing X"
+
+### Hard trigger conditions
+
+Run this skill if **any** of the following are true:
+
+1. The same command behaves differently across shells/editors.
+2. Tool resolution is ambiguous (multiple binaries, unknown path origin, shim/wrapper suspicion).
+3. Prior-agent claims conflict with current machine behavior.
+4. Multiple ecosystems are failing and root cause is unclear.
+5. Package-manager success does not match runtime reality.
+
+If none apply, do standard troubleshooting instead.
+
 ## Follow these operating rules
 
 1. Start in **INSPECTION** mode (read-only).
 2. Treat all claims as untrusted until verified.
-3. Check policy and security stop conditions before remediation.
-4. Require explicit approval before state-changing commands.
-5. Prefer reversible changes, quarantine, and rollback manifests over destructive cleanup.
-6. Verify each fix across PowerShell, CMD, and relevant editor/WSL contexts.
+3. Negotiate capabilities up front (what can/can't be observed in this host).
+4. Check policy and security stop conditions before remediation.
+5. Require explicit approval before state-changing commands.
+6. Prefer reversible changes, quarantine, and rollback manifests over destructive cleanup.
+7. Verify each fix across PowerShell, CMD, and relevant editor/WSL contexts.
 
 ## Run this workflow
 
@@ -23,6 +51,19 @@ Execute forensic triage for broken Windows development environments using a safe
 - Capture failing command(s), context(s), and expected behavior.
 - Capture what changed recently (installer, agent action, policy update, shell profile edits).
 - Define a measurable success condition.
+
+### 1.5) Capability negotiation (mandatory)
+
+Before deep inspection, explicitly state whether you can do each of the following:
+
+- run shell commands,
+- inspect filesystem,
+- inspect env variables,
+- compare multiple shells/contexts,
+- read registry/policy surfaces,
+- access prior-agent claim history.
+
+If any are unavailable, mark affected conclusions as **Unknown (access-limited)** instead of "not present."
 
 ### 2) Enforce mode state
 
@@ -49,6 +90,13 @@ Transition only as follows:
 
 Before proposing repair, validate policy/security blockers (execution policy, MOTW/SmartScreen/Defender, AppLocker/WDAC, proxy/cert constraints, privilege limits).
 
+Execution policy must be interpreted correctly:
+
+- script/profile execution may be blocked,
+- while interactive diagnostics may still work.
+
+Also explicitly distinguish Windows PowerShell 5.1 from PowerShell 7+ during triage.
+
 Load `references/RED-FLAG-INDEX.md` for rapid indicator-to-root-cause mapping, then escalate blockers before touching toolchain state.
 
 ### 4) Perform layered forensics
@@ -63,6 +111,7 @@ At minimum, inspect:
 - **Layer 3:** runtime and dependency coherence.
 - **Layer 4:** shell/profile/editor injection.
 - **Layer 5:** project-local isolation (venv, nvm/fnm/volta, WSL boundaries, repo config).
+- **Layer 6:** prior-agent drift and phantom changes.
 
 ### 5) Classify evidence in every conclusion
 
@@ -73,6 +122,13 @@ Label findings as:
 - **Weak inference**: plausible but unverified.
 
 Never present inference as fact.
+
+Use confidence tags directly in findings:
+
+- **Observed**
+- **Strong inference**
+- **Weak inference**
+- **Unknown**
 
 ### 6) Produce constrained remediation
 
@@ -99,3 +155,15 @@ If stabilized, generate a baseline using `references/BASELINE-ARTIFACT-TEMPLATE.
 - Load `references/PLAYBOOK.md` for full staged execution details.
 - Load `references/BASELINE-ARTIFACT-TEMPLATE.md` at stabilization/handoff time.
 - Load `references/NOTES.md` only for deployment and host-capability guidance.
+
+## Output contract (always)
+
+Respond in this exact high-level structure:
+
+1. Situation Snapshot
+2. Verified Facts
+3. Likely Fragmentation Points
+4. Root-Cause Ranking
+5. Next Safe Actions
+6. Remaining Unknowns
+7. Definition of Done
