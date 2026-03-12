@@ -1,0 +1,28 @@
+{
+  "name": "windows-toolchain-forensics",
+  "version": "1.0.0",
+  "description": "Production-Ready Forensic Debugger for Fragmented Windows Development Environments",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --experimental-vm-modules tests/test.js",
+    "lint": "eslint src/",
+    "docs": "echo 'Documentation generation not yet implemented'"
+  },
+  "keywords": [
+    "forensics",
+    "windows",
+    "debugging",
+    "toolchain",
+    "analysis"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0"
+  }
+}
