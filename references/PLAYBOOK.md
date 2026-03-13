@@ -16,6 +16,8 @@
 | 6 | **CROSS-SHELL**: Never trust one shell; test in PowerShell, CMD, and relevant contexts |
 | 7 | **EVIDENCE**: Label all conclusions with evidence strength |
 | 8 | **ESCALATION**: Halt and escalate when stop conditions are active |
+| 9 | **CMD AUTORUN**: Always inspect HKCU/HKLM `Command Processor\\AutoRun` before shell-level conclusions |
+| 10 | **CAPABILITY OVER METADATA**: For GPU/runtime checks, require real execution probes (not version attributes alone) |
 
 ---
 
@@ -186,6 +188,39 @@ Write-Host "UAC Enabled: $(if($uac -eq 1){'YES'}else{'NO'})"
 ```
 
 **STOP CONDITION:** If admin required but not available and UAC blocks elevation.
+
+**Exit Code:** WTF-103
+
+### 1G. CMD AutoRun Policy Check (MANDATORY)
+
+```powershell
+# Native registry probe is acceptable for exact shell policy behavior
+reg query "HKCU\Software\Microsoft\Command Processor" /v AutoRun
+reg query "HKLM\Software\Microsoft\Command Processor" /v AutoRun
+
+# PowerShell-friendly fallback
+Get-ItemProperty "HKCU:\Software\Microsoft\Command Processor" -Name AutoRun -ErrorAction SilentlyContinue
+Get-ItemProperty "HKLM:\Software\Microsoft\Command Processor" -Name AutoRun -ErrorAction SilentlyContinue
+```
+
+**STOP CONDITION:** Any non-empty AutoRun that injects scripts/hooks into CMD unexpectedly.
+
+**Exit Code:** WTF-102
+
+### 1H. Protected Residue Privilege Gate
+
+If cleanup candidates are under `C:\Program Files*`, `C:\Windows`, or ACL-protected install roots:
+
+- check elevation first,
+- classify as **privilege-gated cleanup**,
+- do not track as ordinary residual cleanup.
+
+```powershell
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+Write-Host "Running as Admin: $isAdmin"
+```
+
+**STOP CONDITION:** Protected-residue deletion requested without required privileges.
 
 **Exit Code:** WTF-103
 
@@ -371,7 +406,13 @@ nvidia-smi 2>&1
 # CUDA check (if relevant)
 Write-Host "`n=== CUDA Toolkit ===" -ForegroundColor Cyan
 nvcc --version 2>&1
+
+# DirectML capability probe (prefer runtime execution over metadata checks)
+Write-Host "`n=== DirectML Runtime Probe ===" -ForegroundColor Cyan
+python -c "import torch, torch_directml; d=torch_directml.device(); x=torch.tensor([1.0,2.0], device=d); y=(x*2).sum().cpu().item(); print('directml_probe_ok', y)" 2>&1
 ```
+
+Do not treat `torch_directml.__version__` (or similar metadata-only reads) as a capability verdict.
 
 ---
 
@@ -556,6 +597,9 @@ foreach ($tool in $tools) {
 ```powershell
 # Run CMD tests
 cmd /c "where python & where node & where git & where dotnet"
+
+# Explicit AutoRun visibility in CMD lane
+cmd /d /c "echo CMD AutoRun disabled for this probe"
 ```
 
 ### 5C. Git Bash Test (if installed)
@@ -580,6 +624,28 @@ if (Get-Command wsl -ErrorAction SilentlyContinue) {
 ---
 
 ## Stage 6: Agent Damage Assessment
+
+### 6A.1 Environment Inheritance Triad (MANDATORY)
+
+For environment-policy keys (example: `PYTHONNOUSERSITE`), verify all three states:
+
+1. Registry/policy state,
+2. Fresh external shell,
+3. Current long-lived app host.
+
+```powershell
+# 1) Registry / user policy
+Get-ItemProperty "HKCU:\Environment" -Name PYTHONNOUSERSITE -ErrorAction SilentlyContinue
+
+# 2) Fresh external shell (new process)
+cmd /c "echo %PYTHONNOUSERSITE%"
+powershell -NoProfile -Command "$env:PYTHONNOUSERSITE"
+
+# 3) Current long-lived host must be checked in-host (VS Code/Codex/agent terminal)
+# Record as Observed / Unknown(access-limited)
+```
+
+Do not close incident state as fixed until triad results are recorded.
 
 ### 6A. Claim Verification Matrix
 
@@ -710,11 +776,26 @@ foreach ($symptom in $symptomMap.Keys) {
 }
 ```
 
+### 7C. Windows Resolution Patterns (apply before reinstalling)
+
+Use these high-leverage patterns to resolve common fragmentation safely:
+
+1. **Resolve-by-path-first**: run the exact intended executable path before PATH edits.
+2. **Shell-policy neutralization**: compare normal CMD with `cmd /d` and inspect PowerShell profiles.
+3. **Session refresh validation**: verify in fresh shell and long-lived host before closing.
+4. **Shim bypass test**: call runtime directly to isolate broken shims/wrappers.
+5. **Single-manager convergence**: pick one manager/version authority per ecosystem.
+6. **Project pin reconciliation**: check `.python-version`, `.nvmrc`, `global.json`, `.tool-versions` before global reinstall.
+
+Record which pattern was used and which symptom it collapsed.
+
 ---
 
 ## Stage 8: Recovery Planning (GUIDED Mode)
 
 ### 8A. Generate Recovery Plan
+
+Add an explicit `failure_mode_prevented` field for each action when applicable.
 
 **When transitioning to GUIDED mode, propose:**
 
@@ -728,7 +809,8 @@ foreach ($symptom in $symptomMap.Keys) {
         "action": "Remove dead PATH entry: C:\NonExistent\Path",
         "risk": "low",
         "reversible": true,
-        "verification": "echo $env:PATH"
+        "verification": "echo $env:PATH",
+        "failure_mode_prevented": "Single-host bias"
       },
       {
         "step": 2,
@@ -867,6 +949,29 @@ function Test-RecoverySuccess {
 }
 ```
 
+### 9D. Agent Failure-Mode Review (MANDATORY)
+
+Before declaring done, explicitly evaluate:
+
+- Was only the visible failing path verified, or full policy propagation triad?
+- Was verification done across all relevant hosts/shells?
+- Was capability proven by execution (not metadata only)?
+- Were privileged cleanup tasks correctly classified/escalated?
+
+Output a compact table:
+
+```json
+{
+  "agent_failure_mode_review": [
+    {
+      "mode": "Premature closure",
+      "present": false,
+      "evidence": "Triad completed: registry + fresh shell + app host"
+    }
+  ]
+}
+```
+
 ---
 
 ## Stage 10: Baseline Documentation
@@ -937,6 +1042,7 @@ After successful recovery, create baseline:
 - [ ] Stop conditions are resolved
 - [ ] All modifications have rollback capability
 - [ ] Baseline artifact is generated
+- [ ] Agent failure-mode review completed and recorded
 
 ---
 

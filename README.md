@@ -2,9 +2,12 @@
 
 Specialized agent skill for diagnosing and repairing fragmented Windows development environments with strict safety controls, evidence labeling, and rollback-first remediation.
 
+This skill is designed to activate reliably from casual, non-technical user phrasing (for example: "my PATH is cursed" or "it works in VS Code but not in terminal").
+
 ## What this repo provides
 
 - A trigger-focused `SKILL.md` with a concise, high-signal operational workflow.
+- Plain-language trigger rules so fragmented-environment cases are caught even when users are not technical.
 - Deep reference material split into `references/` to keep runtime context lean.
 - Structured artifacts for triage, staged execution, and post-repair baselining.
 

@@ -274,20 +274,56 @@ Each red flag tells you:
 
 ---
 
+## Red Flag 23: CMD behaves haunted but PowerShell looks clean (NEW)
+
+| Field | Value |
+|-------|-------|
+| **Likely meaning** | `HKCU/HKLM\\Software\\Microsoft\\Command Processor\\AutoRun` is injecting hooks/scripts (often old conda/bootstrap residues) |
+| **Suspect layers** | Layer 1, Layer 4, Layer 6 |
+| **Stop doing** | Do not declare shell policy fixed after only checking PowerShell profiles |
+| **Verify first** | Query both HKCU/HKLM Command Processor `AutoRun`; run `cmd /d` comparison to bypass autorun temporarily |
+| **Exit code** | WTF-102 |
+
+---
+
+## Red Flag 24: GPU package version check fails, but runtime might still work (NEW)
+
+| Field | Value |
+|-------|-------|
+| **Likely meaning** | Metadata probe is invalid for capability verdict (e.g., missing `__version__`), while actual runtime path may still be healthy |
+| **Suspect layers** | Layer 3 |
+| **Stop doing** | Do not treat metadata-only probes as final pass/fail |
+| **Verify first** | Execute a real tensor/device operation on the target backend (DirectML/CUDA) |
+| **Exit code** | WTF-302 |
+
+---
+
+## Red Flag 25: Symptom is fixed, but policy state is still drifting (NEW)
+
+| Field | Value |
+|-------|-------|
+| **Likely meaning** | Fix validated only on immediate failing path; registry/shell/app-host inheritance not fully verified |
+| **Suspect layers** | Layer 1, Layer 4, Layer 6 |
+| **Stop doing** | Do not close incident after a single-shell pass |
+| **Verify first** | Complete triad: registry policy key, fresh external shell, long-lived app host |
+| **Exit code** | WTF-600 |
+
+---
+
 ## Quick Reference: Exit Code to Red Flag Mapping
 
 | Exit Code | Red Flags |
 |-----------|-----------|
 | WTF-100 | 5, 18 |
 | WTF-101 | 10 |
-| WTF-102 | 1, 14 |
+| WTF-102 | 1, 14, 23 |
 | WTF-103 | 17 |
 | WTF-104 | 11 |
 | WTF-200 | 6 |
 | WTF-201 | 2, 15 |
 | WTF-300 | 3, 15 |
 | WTF-301 | 4 |
-| WTF-302 | 9 |
+| WTF-302 | 9, 24 |
 | WTF-400 | 8, 20 |
 | WTF-401 | 19 |
 | WTF-402 | 7 |
@@ -296,6 +332,6 @@ Each red flag tells you:
 | WTF-405 | 19 |
 | WTF-407 | 20 |
 | WTF-500 | 13 |
-| WTF-600 | 12 |
+| WTF-600 | 12, 25 |
 | WTF-700 | 16 |
 | WTF-701 | 16 |
