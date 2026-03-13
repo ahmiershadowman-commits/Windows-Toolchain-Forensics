@@ -320,6 +320,6 @@ Each red flag tells you:
 | WTF-405 | 19 |
 | WTF-407 | 20 |
 | WTF-500 | 13 |
-| WTF-600 | 12 |
+| WTF-600 | 12, 25 |
 | WTF-700 | 16 |
 | WTF-701 | 16 |

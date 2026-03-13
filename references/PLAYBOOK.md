@@ -776,11 +776,26 @@ foreach ($symptom in $symptomMap.Keys) {
 }
 ```
 
+### 7C. Windows Resolution Patterns (apply before reinstalling)
+
+Use these high-leverage patterns to resolve common fragmentation safely:
+
+1. **Resolve-by-path-first**: run the exact intended executable path before PATH edits.
+2. **Shell-policy neutralization**: compare normal CMD with `cmd /d` and inspect PowerShell profiles.
+3. **Session refresh validation**: verify in fresh shell and long-lived host before closing.
+4. **Shim bypass test**: call runtime directly to isolate broken shims/wrappers.
+5. **Single-manager convergence**: pick one manager/version authority per ecosystem.
+6. **Project pin reconciliation**: check `.python-version`, `.nvmrc`, `global.json`, `.tool-versions` before global reinstall.
+
+Record which pattern was used and which symptom it collapsed.
+
 ---
 
 ## Stage 8: Recovery Planning (GUIDED Mode)
 
 ### 8A. Generate Recovery Plan
+
+Add an explicit `failure_mode_prevented` field for each action when applicable.
 
 **When transitioning to GUIDED mode, propose:**
 
@@ -794,7 +809,8 @@ foreach ($symptom in $symptomMap.Keys) {
         "action": "Remove dead PATH entry: C:\NonExistent\Path",
         "risk": "low",
         "reversible": true,
-        "verification": "echo $env:PATH"
+        "verification": "echo $env:PATH",
+        "failure_mode_prevented": "Single-host bias"
       },
       {
         "step": 2,
@@ -933,6 +949,29 @@ function Test-RecoverySuccess {
 }
 ```
 
+### 9D. Agent Failure-Mode Review (MANDATORY)
+
+Before declaring done, explicitly evaluate:
+
+- Was only the visible failing path verified, or full policy propagation triad?
+- Was verification done across all relevant hosts/shells?
+- Was capability proven by execution (not metadata only)?
+- Were privileged cleanup tasks correctly classified/escalated?
+
+Output a compact table:
+
+```json
+{
+  "agent_failure_mode_review": [
+    {
+      "mode": "Premature closure",
+      "present": false,
+      "evidence": "Triad completed: registry + fresh shell + app host"
+    }
+  ]
+}
+```
+
 ---
 
 ## Stage 10: Baseline Documentation
@@ -1003,6 +1042,7 @@ After successful recovery, create baseline:
 - [ ] Stop conditions are resolved
 - [ ] All modifications have rollback capability
 - [ ] Baseline artifact is generated
+- [ ] Agent failure-mode review completed and recorded
 
 ---
 
