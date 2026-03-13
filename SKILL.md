@@ -43,6 +43,8 @@ If none apply, do standard troubleshooting instead.
 5. Require explicit approval before state-changing commands.
 6. Prefer reversible changes, quarantine, and rollback manifests over destructive cleanup.
 7. Verify each fix across PowerShell, CMD, and relevant editor/WSL contexts.
+8. Treat CMD `Command Processor\AutoRun` as a mandatory shell-mutation check, not optional.
+9. For GPU/runtime validation, prefer capability probes (real execution) over metadata fields.
 
 ## Run this workflow
 
@@ -97,6 +99,13 @@ Execution policy must be interpreted correctly:
 
 Also explicitly distinguish Windows PowerShell 5.1 from PowerShell 7+ during triage.
 
+Mandatory shell-policy checks must include:
+
+- `HKCU\Software\Microsoft\Command Processor\AutoRun`
+- `HKLM\Software\Microsoft\Command Processor\AutoRun`
+
+Any non-empty AutoRun value is a high-priority branch because it can mutate CMD behavior globally.
+
 Load `references/RED-FLAG-INDEX.md` for rapid indicator-to-root-cause mapping, then escalate blockers before touching toolchain state.
 
 ### 4) Perform layered forensics
@@ -146,6 +155,19 @@ After each change:
 - Re-run failing command(s) in all affected contexts.
 - Confirm selected interpreter/runtime/binary path is canonical.
 - Emit residual risks and what was intentionally not changed.
+
+Mandatory verification triad for environment-policy changes:
+
+1. **Registry/user policy state** (key/value exists as expected),
+2. **Fresh external shell** (new PowerShell/CMD process),
+3. **Current long-lived app host** (editor/agent host session inheritance).
+
+Do not mark a fix complete until all three states are checked or explicitly marked unknown.
+
+If cleanup targets protected paths (for example under `Program Files`), branch early:
+
+- classify as **requires elevation/ownership change** when non-admin,
+- do not leave it mixed into ordinary low-risk cleanup.
 
 If stabilized, generate a baseline using `references/BASELINE-ARTIFACT-TEMPLATE.md`.
 
