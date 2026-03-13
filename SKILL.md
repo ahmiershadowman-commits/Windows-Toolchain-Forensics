@@ -34,8 +34,6 @@ Run this skill if **any** of the following are true:
 
 If none apply, do standard troubleshooting instead.
 
-Also trigger when user asks to audit/debug prior agent work quality (missed checks, false completion, contradictory claims).
-
 ## Follow these operating rules
 
 1. Start in **INSPECTION** mode (read-only).
@@ -47,7 +45,6 @@ Also trigger when user asks to audit/debug prior agent work quality (missed chec
 7. Verify each fix across PowerShell, CMD, and relevant editor/WSL contexts.
 8. Treat CMD `Command Processor\AutoRun` as a mandatory shell-mutation check, not optional.
 9. For GPU/runtime validation, prefer capability probes (real execution) over metadata fields.
-10. Distinguish "failing path fixed" from "policy state fully propagated"; both must be verified.
 
 ## Run this workflow
 
@@ -141,18 +138,6 @@ Use confidence tags directly in findings:
 - **Strong inference**
 - **Weak inference**
 - **Unknown**
-
-### 5.5) Track common agent failure modes explicitly
-
-For each incident, explicitly check whether one or more of these happened:
-
-1. **Premature closure**: failing command improved, but policy inheritance was not fully verified.
-2. **Single-host bias**: fixes verified in one shell/host only.
-3. **Metadata-as-capability error**: version/attribute check used instead of real runtime execution.
-4. **Privilege-blind cleanup**: protected paths treated as normal cleanup without elevation gate.
-5. **Narrative overwrite**: prior claim accepted despite contradictory machine evidence.
-
-If present, record as "Agent Failure Mode" with evidence and prevention step.
 
 ### 6) Produce constrained remediation
 

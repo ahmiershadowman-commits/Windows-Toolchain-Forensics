@@ -298,18 +298,6 @@ Each red flag tells you:
 
 ---
 
-## Red Flag 25: Symptom is fixed, but policy state is still drifting (NEW)
-
-| Field | Value |
-|-------|-------|
-| **Likely meaning** | Fix validated only on immediate failing path; registry/shell/app-host inheritance not fully verified |
-| **Suspect layers** | Layer 1, Layer 4, Layer 6 |
-| **Stop doing** | Do not close incident after a single-shell pass |
-| **Verify first** | Complete triad: registry policy key, fresh external shell, long-lived app host |
-| **Exit code** | WTF-600 |
-
----
-
 ## Quick Reference: Exit Code to Red Flag Mapping
 
 | Exit Code | Red Flags |
