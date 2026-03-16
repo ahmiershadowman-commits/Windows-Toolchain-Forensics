@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(ls -la /e/dev/projects/CORVA/*.py /e/dev/projects/neuroforge/*.py)"
-    ]
-  }
-}
